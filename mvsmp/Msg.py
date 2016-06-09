@@ -2,6 +2,7 @@
 # Copyright Stephen Stebbing 2015. http://telecnatron.com/
 # -----------------------------------------------------------------------------
 import sys
+import logging
 from struct import * 
 
 
@@ -16,39 +17,65 @@ class Msg:
     def __init__(self, len=0):
         """ """
         self.data=bytearray();
-        # (Expected) length of the message.
-        self.len=len;
+        # expected length of the message being recived
+        self._rxlen=len;
         # count of the number of data bytes received so far
-        self._count=0;
+        self._rxcount=0;
+
 
     def rx_char(self, c):
-        """ add passed char to the message """
+        """ add passed char to the msg that is being received"""
+        print "msgc: "+str(c)+","
         self.data.extend(c)
-        self._count += 1
-        
-    def is_complete(self):
+        self._rxcount += 1
+
+
+    def rx_is_complete(self):
         """ Returns true if message has been completely received. ie len == count """
-        if self.len == self._count:
+        if self._rxlen == self._rxcount:
             return True
         else:
             return False
 
-    def msg_str(self):
+
+    def tx_char(self, c):
+        """ add passed char to msg that is to be transmitted """
+        self.data.extend(c)
+        
+
+    def get_len(self):
         """ """
-        # make passed string into list (array) of chars 
-        mlist=list(msgS);
-        # pack SOM and length
-        msg=pack('<cB', self.MSG_SOM, len(mlist));
-        # pack data bytes
-        for ch in mlist:
+        return len(self.data);
+
+    def _msg_str_SOM(self):
+        """pack SOM and length """
+        return pack('<cB', self.MSG_SOM, self.get_len());
+
+    def _msg_str_EOM(self):
+        """pack EOM """
+        return  pack('<c', self.MSG_EOM);
+
+
+    def _pack_msg_data(self):
+        """Called by self.msg_str(): return string of packed data chars"""
+        msg= '';
+        for ch in self.data:
             msg+=pack('<c',ch);
-        # pack EOM
-        return msg + pack('<c', self.MSG_EOM);
+        return msg;
+
+
+    def msg_str(self):
+        """ Return binary string suitable for transmission"""
+        # 
+        msg =  self._msg_str_SOM()
+        msg += self._pack_msg_data()
+        msg += self._msg_str_EOM();
+        return msg
 
 
     def str(self):
         """ """
-        str= "msg: len: %2i, data: " % self.len
+        str= "msg: len: %2i, data: " % self._len
         str = str+ ''.join("-"+format(b, '02x') for b in self.data)
         str = str + " str: "+self.data
         return str

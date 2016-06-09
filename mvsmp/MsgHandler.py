@@ -40,6 +40,7 @@ class MsgHandler:
         """Set debug to True to have messages printed to screen on sending and receipt."""
         self.debug=False;
         self.reader.start();
+        self.timeoutSec = timeoutSec
 
 
     def stop(self):
@@ -57,8 +58,8 @@ class MsgHandler:
         """ Send the passed Msg object """
         self.serial.write(msg.msg_str())
         if self.debug:
-            sys.stdout.write("TX ");
-            msg.print_msg()
+            logging.debug("TX "+msg.str())
+
 
 
     def send_recv(self, msg):
@@ -74,18 +75,12 @@ class MsgHandler:
     def handle_msg(self, msg):
         """ Callback for when messsage has been received, add it to the queue"""
         self.rxq.put(msg)
-        if self.debug:
-            sys.stderr.write('RX: ')
-            msg.print_msg()
 
 
     def get_msg(self):
         """ """
         try:
             msg=self.rxq.get(True, self.timeoutSec);
-            if self.debug:
-                sys.stdout.write("RX ");
-                msg.print_msg()
             return msg
         except Queue.Empty,e:
             return None;
@@ -98,7 +93,7 @@ class MsgHandler:
 
     def handle_log_str(self, logstr):
         """ Callback for when log string has been received from MCU, prints to stderr """
-        sys.stderr.write('MCU LOG'+logstr + '\n');
+        logging.info("MCU"+logstr);
 
         
     def handle_non_msg_char(self, c):
@@ -167,10 +162,10 @@ class MsgHandler:
                                 logstr = '';
                     elif state == SLEN:
                         # recived char is message length
-                        msg.len = ord(c)
+                        msg._rxlen = ord(c)
                         state = SDATA
                     elif state == SDATA:
-                        if msg.is_complete():
+                        if msg.rx_is_complete():
                             # have received all the data, looking for EOM
                             if c == Msg.MSG_EOM:
                                 # yep, got EOM, message is complete
@@ -178,10 +173,7 @@ class MsgHandler:
                                 state = SIDLE;
                             else:
                                 # did not get EOM, but should have
-                                logging.error("msg EOM not received: "+str(msg.data))
-                                if self.debug:
-                                    logging.warning("msg EOM not received:\n");
-                                    msg.print_msg();
+                                logging.warning("msg EOM not received: "+msg.str())
                                 state = SIDLE;
                         else:
                             # we're receiving msg data, add rx char to message
@@ -197,3 +189,5 @@ class MsgHandler:
             traceback.print_exc(e)
             raise e
             pass;
+        finally:
+            self.serial.close()

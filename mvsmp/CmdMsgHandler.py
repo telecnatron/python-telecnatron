@@ -4,6 +4,7 @@
 import sys
 import os
 import Queue
+import logging
 #from struct import * 
 from MsgHandler import MsgHandler;
 from CmdMsg import CmdMsg;
@@ -33,28 +34,26 @@ class CmdMsgHandler(MsgHandler):
         return CmdMsg();
 
 
-    def get_async_msg(self, timeoutSec=2):
+    def get_async_msg(self):
         """ """
         try:
-            msg=self.asyncq.get(True, timeoutSec);
-            if self.debug:
-                sys.stdout.write("ASYNC ");
-                msg.print_msg();
+            msg=self.asyncq.get(True, self.timeoutSec);
             return msg
         except Queue.Empty,e:
             return None;
 
 
-    def get_cmd_msg(self, timeoutSec=2):
+    def get_cmd_msg(self):
         """ """
         try:
-            msg=self.cmdrq.get(True, timeoutSec);
-            if self.debug:
-                sys.stdout.write("CMDR ");
-                self.printMsg(msg);
+            msg=self.cmdrq.get(True, self.timeoutSec);
             return msg
         except Queue.Empty,e:
             return None;
+
+    def get_msg(self):
+        """ """
+        return self.get_cmd_msg()
 
 
     def asyncq_flush(self):
@@ -71,26 +70,25 @@ class CmdMsgHandler(MsgHandler):
 
     def reset_mcu(self):
         """ Reset MCU by sending it reset msg """
-        self.sendMsgStr(pack('<c','\0'))
+        logging.debug("reset");
+        m = CmdMsg(0);
+        self.send_msg(m)
 
 
     def handle_msg(self, msg):
         """ """
+        # put msg on appropiate queue depending on whether it was received async or not
         if msg.is_async():
             self.asyncq.put(msg);
         else:
             self.cmdrq.put(msg);
         if self.debug:
             if msg.is_async():
-                sys.stderr.write('RX ASYNC: ')
+                logging.debug('RX ASYNC: '+msg.str())
             else:
-                sys.stderr.write('RX CMD: ')
+                logging.debug('RX CMD: '+msg.str())
 
-
-    def send_msg(self, cmd, data):
-        """ """
-        self.send_msg_str(pack('<Bs',cmd,data))
-
+            
 
 
 

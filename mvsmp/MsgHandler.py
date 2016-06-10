@@ -58,7 +58,7 @@ class MsgHandler:
         """ Send the passed Msg object """
         self.serial.write(msg.msg_str())
         if self.debug:
-            logging.debug("TX "+msg.str())
+            logging.debug("-->TX "+msg.str())
 
 
 

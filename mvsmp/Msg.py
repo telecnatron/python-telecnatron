@@ -47,9 +47,11 @@ class Msg:
         """ """
         return len(self.data);
 
+
     def _msg_str_SOM(self):
         """pack SOM and length """
         return pack('<cB', self.MSG_SOM, self.get_len());
+
 
     def _msg_str_EOM(self):
         """pack EOM """

@@ -25,8 +25,20 @@ class CmdMsgHandler(MsgHandler):
         self.cmdrq = Queue.Queue(maxsize=self.CMDR_QUEUE_MAX);
         # queue for command response messages
         self.asyncq = Queue.Queue(maxsize=self.ASYNC_QUEUE_MAX);
+        # exit status and msg as return by a command
         self.cmd_status=0;
         self.cmd_msg = ''
+
+    def send_recv(self, msg):
+        """ Flushes the cmd queue, then as per MsgHandler.send_recv()"""
+        self.cmdq_flush()
+        return MsgHandler.send_recv(self,msg)
+
+
+    def cmd_result(self, status=0, msg=""):
+        """ """
+        self.cmd_status = status;
+        self.cmd_msg = msg;
 
 
     def _create_msg(self):
@@ -84,9 +96,9 @@ class CmdMsgHandler(MsgHandler):
             self.cmdrq.put(msg);
         if self.debug:
             if msg.is_async():
-                logging.debug('RX ASYNC: '+msg.str())
+                logging.debug('<--RX ASYNC: '+msg.str())
             else:
-                logging.debug('RX CMD: '+msg.str())
+                logging.debug('<--RX CMD: '+msg.str())
 
             
 

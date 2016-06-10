@@ -17,7 +17,6 @@ class CmdMsg(Msg):
     def __init__(self, cmd = 0):
         """ """
         Msg.__init__(self,0)
-        # first byte of self.data is the command
         self.cmd=cmd;
 
 
@@ -43,14 +42,14 @@ class CmdMsg(Msg):
         msg = pack('<B',self.cmd)[0];
         # pack data chars
         for ch in self.data:
-            msg += pack('<c',ch);
+            msg += pack('<B',ch);
         return msg;
 
 
     def str(self):
         """ """
         str= "CmdMsg: cmd: %02x, len: %2i, data_len: %2i, data: " % (self.get_cmd(), self.get_len(), len(self.data))
-        str = str+ ''.join("-"+format(b, '02x') for b in self.data[1::])
+        str = str+ ''.join("-"+format(b, '02x') for b in self.data[0::])
         str = str + " str: "+self.data[1::]
         return str
 

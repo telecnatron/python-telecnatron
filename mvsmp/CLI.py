@@ -4,6 +4,7 @@
 # -----------------------------------------------------------------------------
 import cmd
 import sys
+import logging
 
 class CLI(cmd.Cmd):
     """ Command line interface class. """
@@ -25,9 +26,10 @@ class CLI(cmd.Cmd):
         self.cmd_exit_msg = ''
 
 
-    def _log(self, msg):
+   
+    def default(self,line):
         """ """
-        sys.stderr.write("LOG: "+msg+"\n")
+        self.write_error("Unrecognised command: "+line);
 
         
     def postcmd(self, stop, line):
@@ -47,10 +49,12 @@ class CLI(cmd.Cmd):
         sys.stdout.write(msg)
 
 
-    def write_error(self, msg):
+    def write_error(self, msg, code = 255):
         """ """
-        self._log(msg);
-        sys.stderr.write(msg)
+        m="Error: {:2d}: {!s}".format(code, msg)
+        logging.debug(m);
+        self.write(m+'\n')
+
 
     def cmd_done(self, exit_status = 0, exit_msg = ''):
         """ """
@@ -58,10 +62,7 @@ class CLI(cmd.Cmd):
         self.cmd_exit_msg = exit_msg;
         if( exit_status != 0):
             # display error message
-            msg="Error: cmd returned "+str(exit_status)+": "+exit_msg
-            self.write_error(msg)
-            if self.interactive:
-                self.write(msg)
+            self.write_error(exit_msg, exit_status)
 
 
     def do_EOF(self, line):

@@ -3,6 +3,7 @@
 # -----------------------------------------------------------------------------
 import cmd
 import sys
+import logging
 
 class CLI(cmd.Cmd):
     """ Command line interface class. Wrapper for the cmd class. 
@@ -15,6 +16,8 @@ class CLI(cmd.Cmd):
         cmd.Cmd.__init__(self)
         self.prompt = ''
         self.ruler=''
+        # command line tokenized into individual arguments
+        self.args = []
         # Flag to indicate whether shell is an interactive shell
         self.interactive = interactive
         if interactive:
@@ -37,6 +40,19 @@ class CLI(cmd.Cmd):
             return True
         else:
             return False;
+
+    def precmd(self, line):
+        """ """
+        self.args=line.split()
+        return line
+
+    def argv(self, arg_num):
+        """ """
+        return self.args[arg_num]
+
+    def argc(self):
+        """ """
+        return len(self.args)
 
     def emptyline(self):
         """ """

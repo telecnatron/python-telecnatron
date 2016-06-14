@@ -39,7 +39,8 @@ class CmdMsg(Msg):
         self.sum+=self.cmd;
         # pack data chars
         for ch in self.data:
-            self.sum += ord(ch)
+            #print "ch: "+str(hex(ch));
+            self.sum += ch
             msg += pack('<B',ch);
         return msg;
 

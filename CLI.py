@@ -58,13 +58,20 @@ class CLI(cmd.Cmd):
         """ """
         pass
 
+    def default(self, line):
+        """ """
+        msg="ERROR({}): unrecognised command: {}".format(255,line.split()[0])
+        self._log(msg)
+        if self.interactive:
+            print msg
+
 
     def cmd_done(self, exit_status = 0, error_msg = ''):
         """ """
         self.exit_status = exit_status;
         if( exit_status != 0):
             # display error message
-            msg="Error: cmd returned "+str(exit_status)+": "+error_msg
+            msg="ERROR({}): {}".format(exit_status,error_msg)
             self._log(msg)
             if self.interactive:
                 print msg

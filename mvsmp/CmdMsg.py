@@ -10,10 +10,6 @@ from Msg import Msg;
 class CmdMsg(Msg):
     """ """
 
-    # max MSG_ID of async messages
-    MSG_ID_ASYNC_MAX = 7
-    MSG_ID_INVALID = -1;
-
     def __init__(self, cmd = 0):
         """ """
         Msg.__init__(self,0)
@@ -60,16 +56,7 @@ class CmdMsg(Msg):
         """ """
         return self.cmd
 
-        
-    def is_async(self):
-        """ """
-        cmd = self.get_cmd()
-        if(cmd >= 0 and cmd <= self.MSG_ID_ASYNC_MAX):
-            return True;
-        else:
-            return False;
-
-
+       
     def is_cmd(self):
         """Return true if cmd is a non-async command"""
         return not self.is_async()

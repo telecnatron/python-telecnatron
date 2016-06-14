@@ -48,8 +48,6 @@ class MsgHandler:
 
     def send_msg(self, msg):
         """ Send the passed Msg object """
-        msg.printMsg();
-        logging.debug("msg: "+msg.str());
         self.serial.write(msg.msg_str())
         if self.debug:
             logging.debug("-->TX "+msg.str())

@@ -40,8 +40,10 @@ class CmdMsg(Msg):
         """Called by self.msg_str(): return string of packed data chars"""
         # pack command char
         msg = pack('<B',self.cmd)[0];
+        self.sum+=self.cmd;
         # pack data chars
         for ch in self.data:
+            self.sum += ord(ch)
             msg += pack('<B',ch);
         return msg;
 

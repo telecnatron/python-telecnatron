@@ -19,7 +19,7 @@ class MsgHandler:
     # max size of msg received queue
     RX_QUEUE_MAX  = 8;
     # string used to match logger strings
-    LOGS = '|LOG'
+    LOGS = '\tLOG'
     # max length of log string
     LOGS_MAX = 120;
     # Max num of log messages in log queue
@@ -33,8 +33,6 @@ class MsgHandler:
         except Exception, e:
             sys.stderr.write("Could not open serial port %s: %s\n" % (port, e))
             raise e;
-        # Queue object holds received messages
-        self.rxq = Queue.Queue(maxsize=self.RX_QUEUE_MAX);
         self.alive = True
         self.reader = threading.Thread(target=self.reader_thread)
         """Set debug to True to have messages printed to screen on sending and receipt."""
@@ -48,42 +46,19 @@ class MsgHandler:
         self.alive=False;
 
 
-    def rxq_flush(self):
-        """ """
-        while not rxq.empty():
-            rxq.get()
-
-
     def send_msg(self, msg):
         """ Send the passed Msg object """
+        msg.printMsg();
+        logging.debug("msg: "+msg.str());
         self.serial.write(msg.msg_str())
         if self.debug:
             logging.debug("-->TX "+msg.str())
-
-
-
-    def send_recv(self, msg):
-        """ Send passed message then wait to receive a message in response, 
-        return the received Msg object or None if no message received."""
-        self.send_msg(msg)
-        rmsg = self.get_msg()
-        if rmsg == None:
-            pass
-        return rmsg;
             
 
     def handle_msg(self, msg):
         """ Callback for when messsage has been received, add it to the queue"""
-        self.rxq.put(msg)
-
-
-    def get_msg(self):
-        """ """
-        try:
-            msg=self.rxq.get(True, self.timeoutSec);
-            return msg
-        except Queue.Empty,e:
-            return None;
+        print "Msg!"
+        msg.print_msg();
 
 
     def read_char(self):
@@ -107,6 +82,11 @@ class MsgHandler:
         return Msg();
 
 
+    def calc_cs(self, sum):
+        """ calculate msg checksum based on pass sum (uint8_t) of the msg bytes"""
+        return (256 - sum) %256
+
+
     def reader_thread(self):
         """ """
 
@@ -120,6 +100,8 @@ class MsgHandler:
         state = SIDLE;
         logstr = '';
         msg = self._create_msg();
+        # checksum sum
+        sum = 0;
 
         try:
             while self.alive:
@@ -163,20 +145,25 @@ class MsgHandler:
                     elif state == SLEN:
                         # recived char is message length
                         msg._rxlen = ord(c)
+                        sum = msg._rxlen
                         state = SDATA
                     elif state == SDATA:
                         if msg.rx_is_complete():
-                            # have received all the data, looking for EOM
-                            if c == Msg.MSG_EOM:
-                                # yep, got EOM, message is complete
+                            # have received all the data, now get checksum
+                            if ord(c) == self.calc_cs(sum):
+                                # checksum was valid, message is complete
                                 self.handle_msg(msg)
                                 state = SIDLE;
                             else:
-                                # did not get EOM, but should have
-                                logging.warning("msg EOM not received: "+msg.str())
+                                # checksum was invalid
+                                logging.error("msg invalid checksum: "+str(msg.data))
+                                if self.debug:
+                                    logging.warning("invalid msg checksum:\n");
+                                    self.printMsg(msg);
                                 state = SIDLE;
                         else:
                             # we're receiving msg data, add rx char to message
+                            sum += ord(c)
                             msg.rx_char(c)
 
                 else:

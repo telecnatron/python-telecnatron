@@ -11,22 +11,22 @@ class Msg:
 
     # char indicating start of message
     MSG_SOM='\2'
-    # char indicating end of message
-    MSG_EOM='\3'
 
     def __init__(self, len=0):
         """ """
-        self.data=bytearray();
+        self.data=bytearray()
         # expected length of the message being recived
         self._rxlen=len;
         # count of the number of data bytes received so far
         self._rxcount=0;
+        # count of rx bytes used for checksum calculation
+        self.sum = 0;
 
 
     def rx_char(self, c):
         """ add passed char to the msg that is being received"""
-        print "msgc: "+str(c)+","
         self.data.extend(c)
+        self.sum += ord(c) % 256;
         self._rxcount += 1
 
 
@@ -50,19 +50,22 @@ class Msg:
 
     def _msg_str_SOM(self):
         """pack SOM and length """
+        self.sum=self.get_len();
         return pack('<cB', self.MSG_SOM, self.get_len());
 
 
-    def _msg_str_EOM(self):
-        """pack EOM """
-        return  pack('<c', self.MSG_EOM);
+    def _msg_str_CS(self):
+        """pack checksum """
+        cs= (256 - self.sum) % 256
+        return  pack('<B', cs);
 
 
     def _pack_msg_data(self):
         """Called by self.msg_str(): return string of packed data chars"""
         msg= '';
         for ch in self.data:
-            msg+=pack('<c',ch);
+            self.sum += ord(ch)
+            msg += pack('<B',ch);
         return msg;
 
 
@@ -71,13 +74,13 @@ class Msg:
         # 
         msg =  self._msg_str_SOM()
         msg += self._pack_msg_data()
-        msg += self._msg_str_EOM();
+        msg += self._msg_str_CS();
         return msg
 
 
     def str(self):
         """ """
-        str= "msg: len: %2i, data: " % self._len
+        str= "msg: len: %2i, data: " % self._rxlen
         str = str+ ''.join("-"+format(b, '02x') for b in self.data)
         str = str + " str: "+self.data
         return str

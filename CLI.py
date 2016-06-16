@@ -48,7 +48,10 @@ class CLI(cmd.Cmd):
 
     def argv(self, arg_num):
         """ """
-        return self.args[arg_num]
+        if(arg_num < len(self.args)):
+            return self.args[arg_num]
+        else:
+            return None
 
     def argc(self):
         """ """

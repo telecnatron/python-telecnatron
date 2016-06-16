@@ -9,8 +9,11 @@ import logging
 from MsgHandler import MsgHandler;
 from CmdMsg import CmdMsg;
 
-class CmdMsgException(Exception):
+class CmdMsgError(Exception):
     """Exception class that is used by CmdMsgHandler to raise exceptions """
+    def __init__(self, code=0, msg=''):
+        Exception.__init__(self,msg)
+        self.code = code;
     pass
 
 # -------------------------------------------        
@@ -43,14 +46,17 @@ class CmdMsgHandler(MsgHandler):
         self.cmd_msg = ''
 
 
-    def send_recv(self, msg):
+    def send_recv(self, cmdmsg):
         """ Flushes the cmd queue, sends passed msg then returns the msg that was received in response,
-        or throws CmdMsgHandlerException if no response message is received"""
+        or None if no response received. Throws CmdMsgHandlerException cmd number of response does not match
+        cmd number of sent message"""
         self.cmdq_flush()
-        self.send_msg(msg);
+        self.send_msg(cmdmsg);
         rmsg = self.get_cmd_msg();
         if rmsg == None:
-            raise CmdMsgException("did not receive response msg for sent msg with cmd: "+str(hex(msg.get_cmd()))+' ['+str(msg.get_cmd())+']');
+            raise CmdMsgError(1, "No response to sent command: {} , msg: {}".format(cmdmsg.get_cmd(), cmdmsg.str()));
+        if rmsg != None and rmsg.get_cmd() != cmdmsg.get_cmd():
+            raise CmdMsgError(2, "Response command number did not match that sent: "+str(hex(cmdmsg.get_cmd()))+' received: '+str(hex(rmsg.get_cmd())));
         return rmsg;
 
 
@@ -110,7 +116,7 @@ class CmdMsgHandler(MsgHandler):
     def reset_mcu(self):
         """ Reset MCU by sending it reset msg """
         logging.debug("reset");
-        m = CmdMsg(0);
+        m = CmdMsg(self.CMD_REBOOT);
         self.send_msg(m)
 
 
@@ -122,7 +128,7 @@ class CmdMsgHandler(MsgHandler):
         else:
             self.cmdrq.put(msg);
         if self.debug:
-            if msg.is_async():
+            if self.msg_is_async(msg):
                 logging.debug('<--RX ASYNC: '+msg.str())
             else:
                 logging.debug('<--RX CMD: '+msg.str())

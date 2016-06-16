@@ -58,6 +58,3 @@ class CmdMsg(Msg):
         return self.cmd
 
        
-    def is_cmd(self):
-        """Return true if cmd is a non-async command"""
-        return not self.is_async()

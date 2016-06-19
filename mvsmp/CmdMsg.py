@@ -7,17 +7,18 @@ from struct import *
 from Msg import Msg;
 
 
+
 class CmdMsg(Msg):
-    """ """
+    """A message type derived from Msg class in which the first byte of the data is a command-number"""
 
     def __init__(self, cmd = 0):
         """ """
-        Msg.__init__(self,0)
+        Msg.__init__(self)
         self.cmd=cmd;
 
 
     def rx_char(self, c):
-        """ add passed char to the msg that is being received"""
+        """ Add passed char to the msg data that is being received."""
         # first received char is the command number
         if self._rxcount == 0:
             self.cmd = ord(c);
@@ -27,34 +28,32 @@ class CmdMsg(Msg):
 
 
     def get_len(self):
-        """ """
+        """Return the lenght of the message data."""
         # add one byte for the command
         return len(self.data)+1;
 
 
     def _pack_msg_data(self):
-        """Called by self.msg_str(): return string of packed data chars"""
         # pack command char
         msg = pack('<B',self.cmd)[0];
         self.sum+=self.cmd;
         # pack data chars
         for ch in self.data:
-            #print "ch: "+str(hex(ch));
             self.sum += ch
             msg += pack('<B',ch);
         return msg;
 
 
-    def str(self):
-        """ """
-        str= "CmdMsg: cmd: %02x, len: %2i, data_len: %2i, data: " % (self.get_cmd(), self.get_len(), len(self.data))
-        str = str+ ''.join("-"+format(b, '02x') for b in self.data[0::])
-        str = str + " str: "+self.data[1::]
-        return str
+    def __str__(self):
+        """Return a string being human readible representation of the object's data."""
+        s= "CmdMsg: cmd: %02x, len: %2i, data_len: %2i, data: " % (self.get_cmd(), self.get_len(), len(self.data))
+        s = s + ''.join("-"+format(b, '02x') for b in self.data[0::])
+        s = s + " str: " + str(self.data[1::])
+        return s
 
 
     def get_cmd(self):
-        """ """
+        """Return byte (char) being the message's command number """
         return self.cmd
 
        

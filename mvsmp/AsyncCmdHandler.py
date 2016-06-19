@@ -38,3 +38,6 @@ class AsyncCmdHandler():
             logging.info("ASYNC: "+cmdmsg.str());
 
 
+    def stop(self):
+        """Signal the class's reader_thread to stop and exit."""
+        self.alive=False;

@@ -1,13 +1,12 @@
 # -----------------------------------------------------------------------------
 # Copyright Stephen Stebbing 2015. http://telecnatron.com/
 # -----------------------------------------------------------------------------
-import sys
-import os
 import Queue
 import logging
 #from struct import * 
 from MsgHandler import MsgHandler;
 from CmdMsg import CmdMsg;
+
 
 class CmdMsgError(Exception):
     """Exception class that is used by CmdMsgHandler to raise exceptions """
@@ -15,6 +14,7 @@ class CmdMsgError(Exception):
         Exception.__init__(self,msg)
         self.code = code;
     pass
+
 
 # -------------------------------------------        
 class CmdMsgHandler(MsgHandler):
@@ -33,10 +33,10 @@ class CmdMsgHandler(MsgHandler):
     # max number of items that may be in async queue
     _ASYNC_QUEUE_MAX = 8
    
-    def __init__(self, port, baud, timeoutSec):
+    def __init__(self, timeout_sec):
         """ """
         # call parent class's init.
-        MsgHandler.__init__(self, port, baud, timeoutSec);
+        MsgHandler.__init__(self, timeout_sec);
         # queue for command response messages
         self.cmdrq = Queue.Queue(maxsize=self._CMDR_QUEUE_MAX);
         # queue for command response messages
@@ -48,14 +48,14 @@ class CmdMsgHandler(MsgHandler):
 
     def send_recv(self, cmdmsg):
         """ Flushes the cmd queue, sends passed msg then returns the msg that was received in response,
-        or None if no response received. Throws CmdMsgHandlerException cmd number of response does not match
+        or None if no response received. Raises CmdMsgError if cmd number of response does not match
         cmd number of sent message"""
         self.cmdq_flush()
         self.send_msg(cmdmsg);
         rmsg = self.get_cmd_msg();
         if rmsg == None:
-            raise CmdMsgError(1, "No response to sent command: {} , msg: {}".format(cmdmsg.get_cmd(), cmdmsg.str()));
-        if rmsg != None and rmsg.get_cmd() != cmdmsg.get_cmd():
+            logging.warn("send_recv: did not received response to command: {} , msg: {}".format(cmdmsg.get_cmd(), str(cmdmsg)));
+        elif rmsg.get_cmd() != cmdmsg.get_cmd():
             raise CmdMsgError(2, "Response command number did not match that sent: "+str(hex(cmdmsg.get_cmd()))+' received: '+str(hex(rmsg.get_cmd())));
         return rmsg;
 
@@ -67,7 +67,7 @@ class CmdMsgHandler(MsgHandler):
 
 
     def msg_is_async(self, msg):
-        """Return true if messages's command number is and async command number, false otherwise """
+        """Return true if messages's command number is an async command number, false otherwise """
         if( msg.get_cmd() >= self._CMD_ASYNC_MIN):
             return True;
         else:
@@ -79,21 +79,21 @@ class CmdMsgHandler(MsgHandler):
         return CmdMsg();
 
 
-    def get_async_msg(self, timeoutSec=2):
+    def get_async_msg(self, timeout_sec=2):
         """ """
         try:
-            msg=self.asyncq.get(True, timeoutSec);
+            msg=self.asyncq.get(True, timeout_sec);
             return msg
-        except Queue.Empty,e:
+        except Queue.Empty:
             return None;
 
 
     def get_cmd_msg(self):
         """ """
         try:
-            msg=self.cmdrq.get(True, self.timeoutSec);
+            msg=self.cmdrq.get(True, self.timeout_sec);
             return msg
-        except Queue.Empty,e:
+        except Queue.Empty:
             return None;
 
     def get_msg(self):
@@ -129,9 +129,9 @@ class CmdMsgHandler(MsgHandler):
             self.cmdrq.put(msg);
         if self.debug:
             if self.msg_is_async(msg):
-                logging.debug('<--RX ASYNC: '+msg.str())
+                logging.debug('<--RX ASYNC: '+str(msg))
             else:
-                logging.debug('<--RX CMD: '+msg.str())
+                logging.debug('<--RX CMD: '+str(msg))
 
             
 

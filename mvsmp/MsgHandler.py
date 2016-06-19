@@ -1,67 +1,59 @@
 # -----------------------------------------------------------------------------
-# Copyright Stephen Stebbing 2015. http://telecnatron.com/
+# Copyright Stephen Stebbing 2016. http://telecnatron.com/
 # -----------------------------------------------------------------------------
 import sys
-import os
 import serial
 import threading
-import binascii
 import traceback
 import logging
-import Queue
-#from struct import * 
 from Msg import Msg
 
 # -------------------------------------------        
 class MsgHandler:
     """ """
 
-    # max size of msg received queue
-    RX_QUEUE_MAX  = 8;
-    # string used to match logger strings
+    # string used to match received logger strings
     LOGS = '\tLOG'
     # max length of log string
     LOGS_MAX = 120;
-    # Max num of log messages in log queue
-    LOG_QUEUE_MAX = 16
 
-    def __init__(self, port, baud, timeoutSec=2):
+    def __init__(self, timeout_sec=2):
         """ """
-        try:
-            # create serial port object, open port
-            self.serial = serial.Serial(port, baud, timeout=timeoutSec);
-        except Exception, e:
-            sys.stderr.write("Could not open serial port %s: %s\n" % (port, e))
-            raise e;
         self.alive = True
         self.reader = threading.Thread(target=self.reader_thread)
         """Set debug to True to have messages printed to screen on sending and receipt."""
         self.debug=False;
         self.reader.start();
-        self.timeoutSec = timeoutSec
+        self.timeout_sec = timeout_sec
 
 
     def stop(self):
-        """ """
+        """Signal the class's reader_thread to stop and exit."""
         self.alive=False;
 
 
     def send_msg(self, msg):
-        """ Send the passed Msg object """
-        self.serial.write(msg.msg_str())
+        """Send the passed Msg object """
+        self.write(msg.msg_str())
         if self.debug:
-            logging.debug("-->TX "+msg.str())
+            logging.debug("-->TX "+str(msg))
             
 
     def handle_msg(self, msg):
-        """ Callback for when messsage has been received, add it to the queue"""
-        print "Msg!"
-        msg.print_msg();
+        """Callback for when messsage has been received, add it to the queue"""
+        logging.debug(str(msg));
+
+        
+    def write(self, datas):
+        """Write passed data string to transport medium """
+        raise Exception("write is not implemented");
 
 
     def read_char(self):
-        "Callback for when a new received char is required. Reads from the serial port"
-        return self.serial.read(1);
+        """Reads and returns a character read from the transport stream,
+        or returns None if no character is available.
+        """
+        raise Exception("read is not implemented");
 
 
     def handle_log_str(self, logstr):
@@ -80,9 +72,9 @@ class MsgHandler:
         return Msg();
 
 
-    def calc_cs(self, sum):
+    def calc_cs(self, sum_):
         """ calculate msg checksum based on pass sum (uint8_t) of the msg bytes"""
-        return (256 - sum) %256
+        return (256 - sum_) %256
 
 
     def reader_thread(self):
@@ -99,7 +91,7 @@ class MsgHandler:
         logstr = '';
         msg = self._create_msg();
         # checksum sum
-        sum = 0;
+        sum_ = 0;
 
         try:
             while self.alive:
@@ -143,12 +135,12 @@ class MsgHandler:
                     elif state == SLEN:
                         # recived char is message length
                         msg._rxlen = ord(c)
-                        sum = msg._rxlen
+                        sum_ = msg._rxlen
                         state = SDATA
                     elif state == SDATA:
                         if msg.rx_is_complete():
                             # have received all the data, now get checksum
-                            if ord(c) == self.calc_cs(sum):
+                            if ord(c) == self.calc_cs(sum_):
                                 # checksum was valid, message is complete
                                 self.handle_msg(msg)
                                 state = SIDLE;
@@ -161,7 +153,7 @@ class MsgHandler:
                                 state = SIDLE;
                         else:
                             # we're receiving msg data, add rx char to message
-                            sum += ord(c)
+                            sum_ += ord(c)
                             msg.rx_char(c)
 
                 else:
@@ -173,6 +165,5 @@ class MsgHandler:
             sys.stderr.write("Caught exception in reader thread: ");
             traceback.print_exc(e)
             raise e
-            pass;
         finally:
             self.serial.close()

@@ -35,7 +35,7 @@ class AsyncCmdHandler():
         elif (cmdmsg.get_cmd() == CmdMsgHandler.CMD_APP_STARTED):
             logging.info("ASYNC: application start detected");
         else:
-            logging.info("ASYNC: "+cmdmsg.str());
+            logging.info("ASYNC: "+str(cmdmsg));
 
 
     def stop(self):

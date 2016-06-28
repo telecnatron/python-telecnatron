@@ -48,7 +48,7 @@ class CmdMsg(Msg):
         """Return a string being human readible representation of the object's data."""
         s= "CmdMsg: cmd: %02x, len: %2i, data_len: %2i, data: " % (self.get_cmd(), self.get_len(), len(self.data))
         s = s + ''.join("-"+format(b, '02x') for b in self.data[0::])
-        s = s + " str: " + str(self.data[1::])
+        #s = s + " str: " + str(self.data[1::])
         return s
 
 

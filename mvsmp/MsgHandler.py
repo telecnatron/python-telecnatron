@@ -62,7 +62,7 @@ class MsgHandler:
 
         
     def handle_non_msg_char(self, c):
-        """ Call by reader_thred when a character is received that is not part of a message, nor part of a LOG string"""
+        """ Call by reader_thread when a character is received that is not part of a message, nor part of a LOG string"""
         #sys.stdout.write(c)
         pass
 
@@ -146,10 +146,7 @@ class MsgHandler:
                                 state = SIDLE;
                             else:
                                 # checksum was invalid
-                                logging.error("msg invalid checksum: "+str(msg.data))
-                                if self.debug:
-                                    logging.warning("invalid msg checksum:\n");
-                                    self.printMsg(msg);
+                                logging.error("msg invalid checksum: expected: " +str(hex(self.calc_cs(sum_)))+", got: "+hex(ord(c))+", msg:"+str(msg))
                                 state = SIDLE;
                         else:
                             # we're receiving msg data, add rx char to message

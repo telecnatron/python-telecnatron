@@ -5,7 +5,7 @@
 
 
 class Memory():
-    ""
+    """ """
 
     def __init__(self, sizeBytes, pageSizeBytes=0):
         ""
@@ -60,5 +60,6 @@ class Memory():
         ""
         f=open(filename, "wb");
         f.write(self.memory);
+        f.close()
         
 

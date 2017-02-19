@@ -74,7 +74,8 @@ class MMP:
 
     def nonHandledByte(self, byte):
         """ """
-        print "nh: {:s}".format(byte);
+        #print "nh: {:s}".format(byte);
+        pass
 
 
     def logStrReceived(self, logStr):

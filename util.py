@@ -5,10 +5,10 @@
 import sys
 import logging
 
-def logging_config():
+def logging_config(level=logging.INFO):
     """Configure logging to use required standard format."""
     # see doc for LogRecord attributes: https://docs.python.org/2/library/logging.html#logging.Logger
-    logging.basicConfig(format='LOG:%(levelname)s:%(asctime)s.%(msecs)d: %(filename)s: %(lineno)d: %(message)s', datefmt="%H%M%S", level=logging.DEBUG)
+    logging.basicConfig(format='LOG:%(levelname)s:%(asctime)s.%(msecs)d:%(filename)s:%(lineno)d: %(message)s', datefmt="%H%M%S", level=level)
 
 
 def dict_valkey(diction, val):

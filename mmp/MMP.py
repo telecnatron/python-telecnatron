@@ -135,8 +135,8 @@ class MMP:
         # checksum
         cs = 0;
 
-        try:
-            while self.alive:
+        while self.alive:
+            try:
                 c = self.readByte();
                 if(c != None and len(c) != 0):
                     # char (python string) has been received,
@@ -229,13 +229,11 @@ class MMP:
                         state = SIDLE
                     pass
 
+            except Exception, e:
+                logging.error("Caught exception in reader thread: {}".format(e))
+                #            traceback.print_exc(e)
 
-                
-        except Exception, e:
-            logging.error("Caught exception in reader thread: {}".format(e))
-#            traceback.print_exc(e)
-#            raise e
-        return
+
 
 
 

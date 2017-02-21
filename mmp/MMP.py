@@ -21,6 +21,7 @@ class MMPMsg:
 
     def __str__(self):
         s="len: {}, ".format(self.len)
+        s = s+ "flags: 0x{:02x}, ".format(self.flags)
         s = s + "data: "
         for ch in self.data:
             s = s + "0x{:x},".format(ch)
@@ -29,6 +30,7 @@ class MMPMsg:
             s = s + "{}".format(chr(ch))
         return s
 
+       
 
 # -------------------------------------------        
 class MMP:
@@ -90,13 +92,12 @@ class MMP:
 
 
     def handleMsg(self, msg):
-        logging.info("PC RX: len: {}, flags: 0x{:02x}, data: {}".format(msg.len, msg.flags, msg.data));
-        #print "Data as hex:"
-        #print ''.join("-0x"+format(b, '02x') for b in msg.data)
-        # if(ord(c)!=0):
-        #     print c;
-        # print '0x{:x}'.format(ord(c))
+        logging.info("PC RX: {}".format(msg));
 
+
+    def rebootMCU(self):
+        """ Send MCU message telling it to reboot itself."""
+        self.sendMsg('r',flags=0x0)
 
     def sendMsg(self,  msgData, flags=None):
         """ """

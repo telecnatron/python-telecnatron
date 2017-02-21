@@ -19,6 +19,16 @@ class MMPMsg:
         # count of the number of data bytes received so far
         self.count=0;
 
+    def __str__(self):
+        s="len: {}, ".format(self.len)
+        s = s + "data: "
+        for ch in self.data:
+            s = s + "0x{:x},".format(ch)
+        s = s+ " str: "
+        for ch in self.data:
+            s = s + "{}".format(chr(ch))
+        return s
+
 
 # -------------------------------------------        
 class MMP:
@@ -63,7 +73,8 @@ class MMP:
 
     def nonHandledByte(self, byte):
         """ """
-        print "nh: {:s}".format(byte);
+        #print "nh: {:s}".format(byte);
+        pass
 
 
     def logStrReceived(self, logStr):

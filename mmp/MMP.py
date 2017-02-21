@@ -49,6 +49,8 @@ class MMP:
         self.reader.start();
         self.alive= True
         self.transport=transport
+        # Default message flags byte, used if None is specified in method calls
+        self.flags=0
         if transport == None:
             # use default transport
             logging.warn("MMP is using default transport")
@@ -96,8 +98,12 @@ class MMP:
         # print '0x{:x}'.format(ord(c))
 
 
-    def sendMsg(self,  msgData, flags=0):
+    def sendMsg(self,  msgData, flags=None):
         """ """
+        # use default flags if not specified as parameter
+        if flags == None:
+            flags=self.flags;
+
         length = len(msgData)
         # make up  header
         # checksum

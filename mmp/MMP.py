@@ -92,6 +92,7 @@ class MMP:
 
 
     def handleMsg(self, msg):
+        """ Called when a message is received. Expected to be overriden in subclasses. """
         logging.info("PC RX: {}".format(msg));
 
 

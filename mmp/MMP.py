@@ -8,12 +8,14 @@ from Transport import Transport
 
 
 class MMPMsg:
-    """ """
+    """ Class represents a MMP message"""
     def __init__(self):
         """ """
         self.data=bytearray();
-        # expected length of the message
+        # expected length of the message/ lenght of the received message, 1 byte
         self.len=0;
+        # flags, 1 byte
+        self.flags=0;
         # count of the number of data bytes received so far
         self.count=0;
 
@@ -43,9 +45,6 @@ class MMP:
             self.transport=Transport()
         pass
 
-    def handleMsg(msg):
-        """ """
-        print "MSG! "+msg
 
     def stop(self):
         """ """
@@ -78,7 +77,7 @@ class MMP:
 
 
     def handleMsg(self, msg):
-        logging.info("PC RX: len: {}, data: {}".format(msg.len, msg.data));
+        logging.info("PC RX: len: {}, flags: 0x{:02x}, data: {}".format(msg.len, msg.flags, msg.data));
         #print "Data as hex:"
         #print ''.join("-0x"+format(b, '02x') for b in msg.data)
         # if(ord(c)!=0):
@@ -86,13 +85,13 @@ class MMP:
         # print '0x{:x}'.format(ord(c))
 
 
-    def sendMsg(self, msgData):
+    def sendMsg(self,  msgData, flags=0):
         """ """
         length = len(msgData)
         # make up  header
         # checksum
-        cs=length;
-        m=pack('<cBc', self.MSG_SOM, length, self.MSG_STX);
+        cs=length+flags;
+        m=pack('<cBBc', self.MSG_SOM, length, flags, self.MSG_STX);
         # add data
         for ch in msgData:
             m += pack('<c',ch);
@@ -116,6 +115,7 @@ class MMP:
         SETX   = 4
         SLEN   = 5
         SCS    = 6
+        SFLAGS = 7
         
         logi = 0;
         state = SIDLE;
@@ -171,6 +171,13 @@ class MMP:
                         msg.len = ord(c)
                         cs = msg.len
                         logging.debug("-LEN-")
+                        state = SFLAGS
+
+                    elif state == SFLAGS:
+                        # recived char is message length
+                        msg.flags = ord(c)
+                        cs += ord(c)
+                        logging.debug("-FLAGS-")
                         state = SSTX
 
                     elif state == SSTX:

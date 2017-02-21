@@ -70,9 +70,9 @@ class BootAVR(mmp.MMP):
         self.rxq.put(msg);
 
 
-    def getVersion(self):
+    def getVersion(self, warn=True):
         """ """
-        msg=self.sendReceive(self.CMD_VERSION_READ);
+        msg=self.sendReceive(self.CMD_VERSION_READ, warn=warn);
         if not msg == None:
             # Extract data from response.
             if msg.data[0] == ord(self.CMD_VERSION_READ):
@@ -115,7 +115,7 @@ class BootAVR(mmp.MMP):
         return False;
 
 
-    def sendReceive(self, msgs, timeoutSec = 1):
+    def sendReceive(self, msgs, timeoutSec = 1, warn=True):
         """ """
         # flush rx queue
         while not self.rxq.empty():
@@ -126,7 +126,8 @@ class BootAVR(mmp.MMP):
         try:
             rmsg= self.rxq.get(True, timeoutSec)
         except Queue.Empty, e:
-            logging.warn("sendReceive() receive timeout");
+            if warn:
+                logging.warn("sendReceive() receive timeout");
             rmsg=None
         return rmsg;
 
@@ -250,9 +251,10 @@ class BootAVR(mmp.MMP):
 
 
     def flashErase(self):
-        """ Erase the entire flash."""
+        """Erase the mcu's entire FLASH, excluding the boot section."""
         self.printer("Erasing Flash...", False)
-            
+        for pn in range(0, self.bootPage):
+            self.flashErasePage(pn);
         self.printer("")
         self.printer("Done.")
 

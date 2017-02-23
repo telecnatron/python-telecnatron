@@ -65,7 +65,7 @@ class AsyncCmd(MMP):
         while not self.cmdq.empty():
             self.cmdq.get_nowait();
         # prepend the msgData with the cmd byte, and empty byte being for response STATUS field.
-        msgData = pack("<BBs", cmd, 0, msgData)
+        msgData = pack("<BB", cmd, 0)+msgData
         # send msg
         self.sendMsg(msgData, flags=self.FLAGS_CMD);
         # wait for response

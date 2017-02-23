@@ -146,7 +146,13 @@ class MMP:
                 c = self.readByte();
                 if(c != None and len(c) != 0):
                     # char (python string) has been received,
-                    #logging.debug("rx: 0x{:02x}".format(ord(c)))
+                    if ( ord(c) >= 32 and ord(c)<=127):
+                        a=c;
+                    else:
+                        a='_'
+                    s="~0x{:02x}={}".format(ord(c),a);
+                    #print s,
+                    
                     # ---------------------------------
                     if state == SIDLE:
                         if c == self.MSG_SOM:

@@ -2,7 +2,6 @@
 # Copyright Stephen Stebbing 2017. http://telecnatron.com/
 # -----------------------------------------------------------------------------
 import sys, os, threading, time, binascii, traceback, logging
-import Queue;
 from struct import * ;
 from Transport import Transport
 
@@ -20,7 +19,7 @@ class MMPMsg:
         self.count=0;
 
     def __str__(self):
-        s="len: {}, ".format(self.len)
+        s="data length: {}, ".format(self.len)
         s = s+ "flags: 0x{:02x}, ".format(self.flags)
         s = s + "data: "
         for ch in self.data:
@@ -36,9 +35,9 @@ class MMPMsg:
 class MMP:
     """ """
     # byte indicating start of message
-    MSG_SOM='S'
-    MSG_STX='T'
-    MSG_ETX='E'
+    MSG_SOM='\1'
+    MSG_STX='\2'
+    MSG_ETX='\3'
 
     # string used to match logger strings
     LOGS = '	LOG'
@@ -57,7 +56,6 @@ class MMP:
             # use default transport
             logging.warn("MMP is using default transport")
             self.transport=Transport()
-        pass
 
 
     def stop(self):
@@ -148,6 +146,7 @@ class MMP:
                 c = self.readByte();
                 if(c != None and len(c) != 0):
                     # char (python string) has been received,
+                    #logging.debug("rx: 0x{:02x}".format(ord(c)))
                     # ---------------------------------
                     if state == SIDLE:
                         if c == self.MSG_SOM:
@@ -188,14 +187,14 @@ class MMP:
                     elif state == SLEN:
                         # recived char is message length
                         msg.len = ord(c)
-                        cs = msg.len
+                        cs = msg.len 
                         logging.debug("-LEN-")
                         state = SFLAGS
 
                     elif state == SFLAGS:
                         # recived char is message length
                         msg.flags = ord(c)
-                        cs += ord(c)
+                        cs += ord(c) 
                         logging.debug("-FLAGS-")
                         state = SSTX
 
@@ -229,7 +228,7 @@ class MMP:
                             logging.debug("!ETX not seen!")
 
                     elif state == SCS:
-                        if ord(c) == self.calcCS(cs):
+                        if ord(c) == self.calcCS(cs) :
                             # checksum was valid, message is complete
                             self.handleMsg(msg)
                         else:

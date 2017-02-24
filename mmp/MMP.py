@@ -56,6 +56,13 @@ class MMP:
             # use default transport
             logging.warn("MMP is using default transport")
             self.transport=Transport()
+        # keep track of how many errors have occured
+        self.errors_rx = 0
+        self.errors_timeout = 0
+        self.errors_log = 0;
+        # keep track of how many messages and log strings have been received
+        self.num_log = 0;
+        self.num_msg = 0;
 
 
     def stop(self):
@@ -146,11 +153,11 @@ class MMP:
                 c = self.readByte();
                 if(c != None and len(c) != 0):
                     # char (python string) has been received,
-                    if ( ord(c) >= 32 and ord(c)<=127):
-                        a=c;
-                    else:
-                        a='_'
-                    s="~0x{:02x}={}".format(ord(c),a);
+                    #if ( ord(c) >= 32 and ord(c)<=127):
+                    #    a=c;
+                    #else:
+                    #    a='_'
+                    #s="~0x{:02x}={}".format(ord(c),a);
                     #print s,
                     
                     # ---------------------------------
@@ -179,6 +186,7 @@ class MMP:
                         # we're receiving a log msg
                         if c == '\n':
                             # this is end of log string
+                            self.num_log += 1
                             self.logStrReceived(logstr)
                             state = SIDLE
                             logstr = '';
@@ -186,6 +194,7 @@ class MMP:
                             logstr = logstr + c;
                             if len(logstr) > self.LOGS_MAX:
                                 logging.warn("log string is too long. Truncated: "+logstr+"\n")
+                                self.errors_log += 1;
                                 self.logStrReceived(logstr)
                                 state = SIDLE
                                 logstr = '';
@@ -212,6 +221,7 @@ class MMP:
                         else:
                             # did not get SSTX char when expected
                             logging.debug("!STX not seen!")
+                            self.errors_rx += 1
                             state = SIDLE
                     elif state == SDATA:
                         # we're receiving msg data.
@@ -231,14 +241,17 @@ class MMP:
                             state = SCS
                         else:
                             # did not get ETX char as expected
+                            self.errors_rx += 1
                             logging.debug("!ETX not seen!")
 
                     elif state == SCS:
                         if ord(c) == self.calcCS(cs) :
                             # checksum was valid, message is complete
+                            self.num_msg += 1
                             self.handleMsg(msg)
                         else:
                             # checksum was invalid
+                            self.errors_rx += 1
                             logging.debug("!invalid checksum, expected: 0x{:x} got 0x{:x}".format(self.calcCS(cs), ord(c)))
                         state = SIDLE
 
@@ -246,6 +259,7 @@ class MMP:
                     # timeout: no byte received
                     if state != SIDLE:
                         logging.debug("timeout")
+                        self.errors_timeout += 1
                         state = SIDLE
                     pass
 

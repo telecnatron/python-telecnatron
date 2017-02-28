@@ -5,11 +5,14 @@ import sys, os, threading, time, binascii, traceback, logging
 from struct import * ;
 from Transport import Transport
 
+""" MMP: Microcontroller Message Protocol: a very simple communications protocol for microcontrollers
+This package provides for coms between a PC and a MCU via a RS232 serial for example."
+""" 
 
 class MMPMsg:
     """ Class represents a MMP message"""
     def __init__(self):
-        """ """
+        """Initialise the object"""
         self.data=bytearray();
         # expected length of the message/ lenght of the received message, 1 byte
         self.len=0;
@@ -19,6 +22,7 @@ class MMPMsg:
         self.count=0;
 
     def __str__(self):
+        """ return string representation of the object. """
         s="data length: {}, ".format(self.len)
         s = s+ "flags: 0x{:02x}, ".format(self.flags)
         s = s + "data: "
@@ -29,29 +33,35 @@ class MMPMsg:
             s = s + "{}".format(chr(ch))
         return s
 
-       
-
 # -------------------------------------------        
 class MMP:
     """ """
-    # byte indicating start of message
+
+    # Bytes indicating significance in a message that is being received:
+    # start of message
     MSG_SOM='\1'
+    # start of text
     MSG_STX='\2'
+    # end of text
     MSG_ETX='\3'
 
-    # string used to match logger strings
+    # string used to match start of logger strings, note that log strings are terminiated with '\n'
     LOGS = '	LOG'
     # max length of log string
     LOGS_MAX = 255;
 
     def __init__(self, transport=None):
-        """ """
+        """
+        :param transport: (Reference to) object of class mmp.Transport that is used to send and receive bytes on the communications channel.
+        """
+        # thread reads incoming data from Transport
         self.reader = threading.Thread(target=self.readerThread)
         self.reader.start();
+        # flag used to indicate to reader thread should continue or exit.
         self.alive= True
-        self.transport=transport
         # Default message flags byte, used if None is specified in method calls
         self.flags=0
+        self.transport=transport
         if transport == None:
             # use default transport
             logging.warn("MMP is using default transport")
@@ -66,38 +76,57 @@ class MMP:
 
 
     def stop(self):
-        """ """
+        """ Stop reading from Transport, shut down."""
         self.alive=False
 
 
     def readByte(self):
-        """ """
+        """see Transport.readByte()"""
         return self.transport.readByte();
 
 
     def write(self, databytes):
-        """ """
+        """:see: Transport.write()"""
         self.transport.write(databytes);
 
 
     def nonHandledByte(self, byte):
-        """ """
+        """ 
+        Called when a byte has been received that is not part of a message or a log message.
+        :param byte: The byte (char or whatever it is in python)
+
+        """
         #print "nh: {:s}".format(byte);
         pass
 
 
     def logStrReceived(self, logStr):
-        """ """
+        """Called when a log string has been received. Prints string using logging.info(). 
+        Expected to be overriden in subclasses.
+        :param logStr: The received log string
+        """
+
         # don't print leading \t
         logging.info("MCU: "+logStr[1:])
 
 
     def calcCS(self, intCS):
+        """Convert passed sum to message checksum
+        :param intCS: Sum of the checksumable chars in current received message
+        :type intCS: unsigned integer
+        :returns: The checksum that should match the checksum received in the message
+        :rtype: integer ( modded to 8 bits)
+
+        """
         return (256 - intCS) %256
 
 
     def handleMsg(self, msg):
-        """ Called when a message is received. Expected to be overriden in subclasses. """
+        """Called when a message has been received. Logs the message as string.
+        Expected to be overriden in subclass.
+        :param msg: Object representing the received message.
+        :type msg: mmp.Msg
+        """
         logging.info("PC RX: {}".format(msg));
 
 
@@ -106,7 +135,11 @@ class MMP:
         self.sendMsg('r',flags=0x0)
 
     def sendMsg(self,  msgData, flags=None):
-        """ """
+        """Send the passed data as a message.
+        :param msgData: The data for the message to be sent. May be string or bytearray.
+        :param flags: The flags field for the message. Used by higher level protocol and 
+        not of significance here. If None, the default value of self.flags (currently =0) is used.
+        """
         # use default flags if not specified as parameter
         if flags == None:
             flags=self.flags;
@@ -130,7 +163,11 @@ class MMP:
 
 
     def readerThread(self):
-        """ """
+        """Thread-loop method that is called by self.reader thread:
+        * Polls for and implements the protocol for received messages and log strings.
+        * Calls the callback methods handleMessage(), logStringReceived() and nonHandlerByte() as required.
+        * Set self.alive to have the thread exit at completion of current loop.
+        """
         # states
         SIDLE  = 0
         SLOG   = 1

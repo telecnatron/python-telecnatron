@@ -1,12 +1,13 @@
 # -----------------------------------------------------------------------------
 # Copyright Stephen Stebbing 2017. http://telecnatron.com/
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
 # -----------------------------------------------------------------------------
-#/**
-# * @file   AsyncCmd.py
-# * @author steves
-# * @date   2017/02/22 00:56:10
-# * 
-# */
 import logging;
 import Queue;
 from MMP import *;

@@ -1,14 +1,14 @@
 # ------------------------------------------------------------------------------
 # Copyright 2020 Stephen Stebbing. telecnatron.com
 #
-#    Licensed under the Telecnatron License, Version 1.0 (the “License”);
+#    Licensed under the Telecnatron License, Version 1.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
 #        https://telecnatron.com/software/licenses/
 #
 #    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an “AS IS” BASIS,
+#    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
@@ -58,8 +58,6 @@ class MMP:
 
     def __init__(self, transport=None):
         """ """
-        self.reader = threading.Thread(target=self.readerThread)
-        self.reader.start();
         self.alive= True
         self.transport=transport
         # Default message flags byte, used if None is specified in method calls
@@ -75,6 +73,9 @@ class MMP:
         # keep track of how many messages and log strings have been received
         self.num_log = 0;
         self.num_msg = 0;
+        # init reader thread
+        self.reader = threading.Thread(target=self.readerThread)
+        self.reader.start();
 
 
     def stop(self):
@@ -159,7 +160,6 @@ class MMP:
         msg = MMPMsg();
         # checksum
         cs = 0;
-
         while self.alive:
             try:
                 c = self.readByte();
